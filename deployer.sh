@@ -4,6 +4,7 @@ CLEANUP_WHEN_ERROR="1"
 VERBOSE="1"
 REPOSITORY=""
 POST_CLONE_HOOK=""
+KEEP_RELEASES_COUNT=10
 
 START_TIMESTAMP=$(date +%s)
 START_DATE=`date '+%Y-%m-%d'`
@@ -22,7 +23,7 @@ function run_command_exit_on_error {
     RESULT=$($COMMAND)
     STATUS=$?
 
-    if [ -z $STATUS ]; then
+    if [ $STATUS -ne "0" ]; then
         exit_with_error "Running ${1} failed: $RESULT"
     fi
 }
@@ -123,15 +124,40 @@ function ensure_folder_exists {
     run_command_exit_on_error "mkdir -p $1"
 }
 
-function create_atomic_symlink {
+function update_current_release {
     SOURCE="$1"
-    TARGET="$2"
+    TARGET="$CURRENT_RELEASE_PATH"
+
+    log_info "Replacing current release"
 
     if [ -d "$TARGET" ]; then
         run_command_exit_on_error "rm $TARGET"
     fi
 
-    run_command_exit_on_error "ln -s $SOURCE $TARGET"
+    run_command_exit_on_error "ln -sf $SOURCE $TARGET"
+}
+
+function cleanup_old_releases {
+    echo "$RELEASES_PATH"
+
+    SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+    FILES=($(/bin/ls -t "$RELEASES_PATH"))
+
+    SKIPPED_DIRECTORIES=0
+
+    for ENTRY in ${FILES[@]}
+    do
+        if [ -d "$RELEASES_PATH/$ENTRY" ]; then
+            if [ "$SKIPPED_DIRECTORIES" -lt "$KEEP_RELEASES_COUNT" ]; then
+                SKIPPED_DIRECTORIES=$((SKIPPED_DIRECTORIES+1))
+            else
+                rm -R "$RELEASES_PATH/$ENTRY"
+            fi
+        fi
+    done
+
+    IFS=$SAVEIFS
 }
 
 for ARGUMENT in "$@"; do
@@ -159,6 +185,9 @@ for ARGUMENT in "$@"; do
             ;;
         CONFIG_FILE_NAME)
             CONFIG_FILE_NAME=${VALUE}
+            ;;
+        KEEP_RELEASES_COUNT)
+            KEEP_RELEASES_COUNT=${VALUE}
             ;;
         *)
     esac
@@ -198,8 +227,8 @@ if [ ! -z "$POST_CLONE_HOOK" ]; then
     fi
 fi
 
-log_info "Replacing current release"
+update_current_release "$DEPLOY_RELEASE_PATH"
 
-create_atomic_symlink "$DEPLOY_RELEASE_PATH" "$CURRENT_RELEASE_PATH"
+cleanup_old_releases
 
 exit 0
