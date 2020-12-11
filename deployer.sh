@@ -1,6 +1,6 @@
 #!/bin/sh
 LOG_HISTORY=()
-CLEANUP_WHEN_ERROR="0"
+CLEANUP_WHEN_ERROR="1"
 VERBOSE="1"
 REPOSITORY=""
 POST_CLONE_HOOK=""
@@ -14,6 +14,8 @@ LOG_FILE="$LOG_PATH/$START_DATE.log"
 RELEASES_PATH="$SCRIPT_PATH/releases"
 CURRENT_RELEASE_PATH="$RELEASES_PATH/current"
 SHARED_PATH="$SCRIPT_PATH/shared"
+
+CONFIG_FILE_NAME=".env"
 
 function run_command_exit_on_error {
     COMMAND=${1}
@@ -155,9 +157,16 @@ for ARGUMENT in "$@"; do
         POST_CLONE_HOOK)
             POST_CLONE_HOOK=${VALUE}
             ;;
+        CONFIG_FILE_NAME)
+            CONFIG_FILE_NAME=${VALUE}
+            ;;
         *)
     esac
 done
+
+if [ -f "$SCRIPT_PATH/$CONFIG_FILE_NAME" ]; then
+    source "$SCRIPT_PATH/$CONFIG_FILE_NAME"
+fi
 
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
