@@ -222,12 +222,6 @@ echo "$USER"
 
 log_info "Cloning repository"
 
-if [ -z "$REPOSITORY_SSH_KEY_PATH" ]; then
-    run_command_exit_on_error "git clone $REPOSITORY $DEPLOY_RELEASE_PATH"
-else
-    run_command_exit_on_error "ssh-agent bash -c 'ssh-add $REPOSITORY_SSH_KEY_PATH; $REPOSITORY $DEPLOY_RELEASE_PATH'"
-fi
-
 if [ ! -z "$REPOSITORY_SSH_KEY_PATH" ]; then
     export GIT_SSH_COMMAND="ssh -i $REPOSITORY_SSH_KEY_PATH -o IdentitiesOnly=yes"
 fi
