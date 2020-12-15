@@ -202,6 +202,7 @@ fi
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
 ensure_folder_exists $LOG_PATH
+ensure_folder_exists $SHARED_PATH
 ensure_folder_exists $RELEASES_PATH
 
 PROGRAMS_TO_CHECK=(mkdir ln git composer)
