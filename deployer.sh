@@ -232,6 +232,8 @@ if [ ! -z "$POST_CLONE_HOOK" ]; then
         run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
 
         log_info "Post-clone hook completed"
+    else
+        exit_with_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK not found"
     fi
 fi
 
