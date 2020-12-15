@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 LOG_HISTORY=()
 CLEANUP_WHEN_ERROR="1"
 VERBOSE="1"
