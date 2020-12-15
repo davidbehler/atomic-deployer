@@ -139,8 +139,6 @@ function update_current_release {
 }
 
 function cleanup_old_releases {
-    echo "$RELEASES_PATH"
-
     SAVEIFS=$IFS
     IFS=$(echo -en "\n\b")
     FILES=($(/bin/ls -t "$RELEASES_PATH"))
@@ -217,8 +215,6 @@ done
 if [ -z "$REPOSITORY" ]; then
     exit_with_error "No repository set"
 fi
-
-echo "$USER"
 
 log_info "Cloning repository"
 
