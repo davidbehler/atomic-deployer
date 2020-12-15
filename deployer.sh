@@ -3,6 +3,7 @@ LOG_HISTORY=()
 CLEANUP_WHEN_ERROR="1"
 VERBOSE="1"
 REPOSITORY=""
+REPOSITORY_SSH_KEY_PATH=""
 POST_CLONE_HOOK=""
 KEEP_RELEASES_COUNT=10
 
@@ -180,6 +181,9 @@ for ARGUMENT in "$@"; do
         REPOSITORY)
             REPOSITORY=${VALUE}
             ;;
+        REPOSITORY_SSH_KEY_PATH)
+            REPOSITORY_SSH_KEY_PATH=${VALUE}
+            ;;
         POST_CLONE_HOOK)
             POST_CLONE_HOOK=${VALUE}
             ;;
@@ -214,7 +218,20 @@ if [ -z "$REPOSITORY" ]; then
     exit_with_error "No repository set"
 fi
 
+echo "$USER"
+
 log_info "Cloning repository"
+
+if [ -z "$REPOSITORY_SSH_KEY_PATH" ]; then
+    run_command_exit_on_error "git clone $REPOSITORY $DEPLOY_RELEASE_PATH"
+else
+    run_command_exit_on_error "ssh-agent bash -c 'ssh-add $REPOSITORY_SSH_KEY_PATH; $REPOSITORY $DEPLOY_RELEASE_PATH'"
+fi
+
+if [ ! -z "$REPOSITORY_SSH_KEY_PATH" ]; then
+    export GIT_SSH_COMMAND="ssh -i $REPOSITORY_SSH_KEY_PATH -o IdentitiesOnly=yes"
+fi
+
 run_command_exit_on_error "git clone $REPOSITORY $DEPLOY_RELEASE_PATH"
 
 if [ ! -z "$POST_CLONE_HOOK" ]; then
