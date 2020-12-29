@@ -151,7 +151,7 @@ function cleanup_old_releases {
             if [ "$SKIPPED_DIRECTORIES" -lt "$KEEP_RELEASES_COUNT" ]; then
                 SKIPPED_DIRECTORIES=$((SKIPPED_DIRECTORIES+1))
             else
-                rm -R "$RELEASES_PATH/$ENTRY"
+                rm -rf "$RELEASES_PATH/$ENTRY"
             fi
         fi
     done
