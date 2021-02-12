@@ -223,7 +223,7 @@ if [ ! -z "$REPOSITORY_SSH_KEY_PATH" ]; then
     export GIT_SSH_COMMAND="ssh -i $REPOSITORY_SSH_KEY_PATH -o IdentitiesOnly=yes"
 fi
 
-run_command_exit_on_error "git clone $REPOSITORY $DEPLOY_RELEASE_PATH"
+run_command_exit_on_error "git clone --depth 1 $REPOSITORY $DEPLOY_RELEASE_PATH"
 
 if [ ! -z "$POST_CLONE_HOOK" ]; then
     if [ -f "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK" ]; then
