@@ -5,6 +5,7 @@ VERBOSE="1"
 REPOSITORY=""
 REPOSITORY_SSH_KEY_PATH=""
 POST_CLONE_HOOK=""
+POST_UPDATE_HOOK=""
 KEEP_RELEASES_COUNT=10
 
 START_TIMESTAMP=$(date +%s)
@@ -185,6 +186,9 @@ for ARGUMENT in "$@"; do
         POST_CLONE_HOOK)
             POST_CLONE_HOOK=${VALUE}
             ;;
+        POST_UPDATE_HOOK)
+            POST_UPDATE_HOOK=${VALUE}
+            ;;
         CONFIG_FILE_NAME)
             CONFIG_FILE_NAME=${VALUE}
             ;;
@@ -240,5 +244,17 @@ fi
 update_current_release "$DEPLOY_RELEASE_PATH"
 
 cleanup_old_releases
+
+if [ ! -z "$POST_UPDATE_HOOK" ]; then
+    if [ -f "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK" ]; then
+        log_info "Calling $POST_UPDATE_HOOK in release"
+
+        run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK"
+
+        log_info "Post-update hook completed"
+    else
+        exit_with_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK not found"
+    fi
+fi
 
 exit 0
