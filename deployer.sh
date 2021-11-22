@@ -209,10 +209,6 @@ if [ ! -z "$DEPLOY_RELEASE_PATH" ]; then
     DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 fi
 
-exit_with_error "after: $DEPLOY_RELEASE_PATH"
-
-exit 0
-
 ensure_folder_exists $LOG_PATH
 ensure_folder_exists $SHARED_PATH
 ensure_folder_exists $RELEASES_PATH
