@@ -209,6 +209,8 @@ fi
 
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
+log_info "$DEPLOY_RELEASE_PATH"
+
 run_command_exit_on_error "sudo -u www-data -H ./deployer.sh DEPLOY_RELEASE_PATH=$DEPLOY_RELEASE_PATH"
 
 if [ ! -z "$SUDO_POST_UPDATE_HOOK" ]; then
