@@ -208,6 +208,8 @@ fi
 
 log_info "after: $DEPLOY_RELEASE_PATH"
 
+exit 0
+
 ensure_folder_exists $LOG_PATH
 ensure_folder_exists $SHARED_PATH
 ensure_folder_exists $RELEASES_PATH
