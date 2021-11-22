@@ -6,6 +6,7 @@ REPOSITORY=""
 REPOSITORY_SSH_KEY_PATH=""
 POST_CLONE_HOOK=""
 POST_UPDATE_HOOK=""
+SUDO_POST_UPDATE_HOOK=""
 KEEP_RELEASES_COUNT=10
 
 START_TIMESTAMP=$(date +%s)
@@ -189,6 +190,9 @@ for ARGUMENT in "$@"; do
         POST_UPDATE_HOOK)
             POST_UPDATE_HOOK=${VALUE}
             ;;
+        SUDO_POST_UPDATE_HOOK)
+            SUDO_POST_UPDATE_HOOK=${VALUE}
+            ;;
         CONFIG_FILE_NAME)
             CONFIG_FILE_NAME=${VALUE}
             ;;
@@ -254,6 +258,18 @@ if [ ! -z "$POST_UPDATE_HOOK" ]; then
         log_info "Post-update hook completed"
     else
         exit_with_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK not found"
+    fi
+fi
+
+if [ ! -z "$SUDO_POST_UPDATE_HOOK" ]; then
+    if [ -f "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK" ]; then
+        log_info "Calling $SUDO_POST_UPDATE_HOOK in release"
+
+        run_command_exit_on_error "sudo $DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK"
+
+        log_info "sudo post-update hook completed"
+    else
+        exit_with_error "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK not found"
     fi
 fi
 
