@@ -6,7 +6,9 @@ REPOSITORY=""
 REPOSITORY_SSH_KEY_PATH=""
 POST_CLONE_HOOK=""
 POST_UPDATE_HOOK=""
+SUDO_POST_UPDATE_HOOK=""
 KEEP_RELEASES_COUNT=10
+
 START_TIMESTAMP=$(date +%s)
 START_DATE=`date '+%Y-%m-%d'`
 SCRIPT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -170,9 +172,6 @@ for ARGUMENT in "$@"; do
         SHARED_PATH)
             SHARED_PATH=${VALUE}
             ;;
-        DEPLOY_RELEASE_PATH)
-            DEPLOY_RELEASE_PATH=${VALUE}
-            ;;
         CLEANUP_WHEN_ERROR)
             CLEANUP_WHEN_ERROR=${VALUE}
             ;;
@@ -191,6 +190,9 @@ for ARGUMENT in "$@"; do
         POST_UPDATE_HOOK)
             POST_UPDATE_HOOK=${VALUE}
             ;;
+        SUDO_POST_UPDATE_HOOK)
+            SUDO_POST_UPDATE_HOOK=${VALUE}
+            ;;
         CONFIG_FILE_NAME)
             CONFIG_FILE_NAME=${VALUE}
             ;;
@@ -205,59 +207,19 @@ if [ -f "$SCRIPT_PATH/$CONFIG_FILE_NAME" ]; then
     source "$SCRIPT_PATH/$CONFIG_FILE_NAME"
 fi
 
-if [ ! -z "$DEPLOY_RELEASE_PATH" ]; then
-    DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
-fi
+DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
-ensure_folder_exists $LOG_PATH
-ensure_folder_exists $SHARED_PATH
-ensure_folder_exists $RELEASES_PATH
+run_command_exit_on_error "sudo -u www-data -H ./non-root-deployer.sh DEPLOY_RELEASE_PATH=$DEPLOY_RELEASE_PATH"
 
-PROGRAMS_TO_CHECK=(mkdir ln git composer)
+if [ ! -z "$SUDO_POST_UPDATE_HOOK" ]; then
+    if [ -f "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK" ]; then
+        log_info "Calling $SUDO_POST_UPDATE_HOOK in release"
 
-log_info "Checking requirements"
+        run_command_exit_on_error "sudo $DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK"
 
-for PROGRAM_TO_CHECK in "${PROGRAMS_TO_CHECK[@]}"; do
-    check_if_program_exists $PROGRAM_TO_CHECK
-done
-
-if [ -z "$REPOSITORY" ]; then
-    exit_with_error "No repository set"
-fi
-
-log_info "Cloning repository"
-
-if [ ! -z "$REPOSITORY_SSH_KEY_PATH" ]; then
-    export GIT_SSH_COMMAND="ssh -i $REPOSITORY_SSH_KEY_PATH -o IdentitiesOnly=yes"
-fi
-
-run_command_exit_on_error "git clone --depth 1 $REPOSITORY $DEPLOY_RELEASE_PATH"
-
-if [ ! -z "$POST_CLONE_HOOK" ]; then
-    if [ -f "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK" ]; then
-        log_info "Calling $POST_CLONE_HOOK in release"
-
-        run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
-
-        log_info "Post-clone hook completed"
+        log_info "post-update hook completed"
     else
-        exit_with_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK not found"
-    fi
-fi
-
-update_current_release "$DEPLOY_RELEASE_PATH"
-
-cleanup_old_releases
-
-if [ ! -z "$POST_UPDATE_HOOK" ]; then
-    if [ -f "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK" ]; then
-        log_info "Calling $POST_UPDATE_HOOK in release"
-
-        run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK"
-
-        log_info "Post-update hook completed"
-    else
-        exit_with_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK not found"
+        exit_with_error "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK not found"
     fi
 fi
 
