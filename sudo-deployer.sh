@@ -213,6 +213,8 @@ log_info "$DEPLOY_RELEASE_PATH"
 
 run_command_exit_on_error "sudo -u www-data -H ./deployer.sh DEPLOY_RELEASE_PATH=$DEPLOY_RELEASE_PATH"
 
+exit 0
+
 if [ ! -z "$SUDO_POST_UPDATE_HOOK" ]; then
     if [ -f "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK" ]; then
         log_info "Calling $SUDO_POST_UPDATE_HOOK in release"
