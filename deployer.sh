@@ -203,6 +203,10 @@ for ARGUMENT in "$@"; do
     esac
 done
 
+log_info "$SUDO_POST_UPDATE_HOOK"
+
+exit 0;
+
 if [ -f "$SCRIPT_PATH/$CONFIG_FILE_NAME" ]; then
     source "$SCRIPT_PATH/$CONFIG_FILE_NAME"
 fi
