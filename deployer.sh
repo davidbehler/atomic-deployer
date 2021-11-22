@@ -170,6 +170,9 @@ for ARGUMENT in "$@"; do
         SHARED_PATH)
             SHARED_PATH=${VALUE}
             ;;
+        DEPLOY_RELEASE_PATH)
+            DEPLOY_RELEASE_PATH=${VALUE}
+            ;;
         CLEANUP_WHEN_ERROR)
             CLEANUP_WHEN_ERROR=${VALUE}
             ;;
