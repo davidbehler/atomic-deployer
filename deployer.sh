@@ -203,13 +203,13 @@ for ARGUMENT in "$@"; do
     esac
 done
 
-log_info "$SUDO_POST_UPDATE_HOOK"
-
-exit 0;
-
 if [ -f "$SCRIPT_PATH/$CONFIG_FILE_NAME" ]; then
     source "$SCRIPT_PATH/$CONFIG_FILE_NAME"
 fi
+
+log_info "$SUDO_POST_UPDATE_HOOK"
+
+exit 0;
 
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
