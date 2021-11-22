@@ -207,10 +207,6 @@ if [ -f "$SCRIPT_PATH/$CONFIG_FILE_NAME" ]; then
     source "$SCRIPT_PATH/$CONFIG_FILE_NAME"
 fi
 
-log_info "$SUDO_POST_UPDATE_HOOK"
-
-exit 0;
-
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
 ensure_folder_exists $LOG_PATH
