@@ -209,6 +209,10 @@ fi
 
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
+log_info "Deployment started"
+
+run_command_exit_on_error "sudo chown -R www-data: $LOG_PATH"
+
 run_command_exit_on_error "sudo -u www-data -H ./non-root-deployer.sh DEPLOY_RELEASE_PATH=$DEPLOY_RELEASE_PATH"
 
 if [ ! -z "$SUDO_POST_UPDATE_HOOK" ]; then
@@ -217,7 +221,7 @@ if [ ! -z "$SUDO_POST_UPDATE_HOOK" ]; then
 
         run_command_exit_on_error "sudo $DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK"
 
-        log_info "post-update hook completed"
+        log_info "sudo post-update hook completed"
     else
         exit_with_error "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK not found"
     fi
