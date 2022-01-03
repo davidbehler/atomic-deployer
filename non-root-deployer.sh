@@ -49,6 +49,8 @@ function log {
     fi
 }
 
+
+
 function log_info {
     log "${1}" "INFO"
 }
