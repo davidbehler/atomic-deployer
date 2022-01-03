@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-LOG_HISTORY=()
 CLEANUP_WHEN_ERROR="1"
 VERBOSE="1"
 REPOSITORY=""
@@ -40,8 +39,6 @@ function log {
     if [ ! -z "$2" ]; then
         LOG_LEVEL=${2}
     fi
-
-    LOG_HISTORY+=("$DATETIME - $1")
 
     if [ ! -z "${LOG_FILE}" ]; then
         echo "$DATETIME - $LOG_LEVEL - $1" >> ${LOG_FILE}
