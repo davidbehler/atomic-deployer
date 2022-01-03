@@ -20,6 +20,8 @@ SHARED_PATH="$SCRIPT_PATH/shared"
 
 CONFIG_FILE_NAME=".env"
 
+cd "$SCRIPT_PATH"
+
 function run_command_exit_on_error {
     COMMAND=${1}
     RESULT=$($COMMAND)
