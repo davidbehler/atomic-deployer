@@ -234,31 +234,40 @@ fi
 
 run_command_exit_on_error "git clone --depth 1 $REPOSITORY $DEPLOY_RELEASE_PATH"
 
-if [ ! -z "$POST_CLONE_HOOK" ]; then
-    if [ -f "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK" ]; then
-        log_info "Calling $POST_CLONE_HOOK in release"
+CURRENT_COMMIT_ID=`git --git-dir $CURRENT_RELEASE_PATH/.git rev-parse HEAD`
+CLONED_COMMIT_ID=`git --git-dir $DEPLOY_RELEASE_PATH/.git rev-parse HEAD`
 
-        run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
+if [ "$CURRENT_COMMIT_ID" == "$CLONED_COMMIT_ID" ]; then
+    log_info "COMMIT IDs are identical, nothing to do. Cleaning up...."
 
-        log_info "Post-clone hook completed"
-    else
-        exit_with_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK not found"
+    rm -rf "$DEPLOY_RELEASE_PATH"
+else
+    if [ ! -z "$POST_CLONE_HOOK" ]; then
+        if [ -f "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK" ]; then
+            log_info "Calling $POST_CLONE_HOOK in release"
+
+            run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
+
+            log_info "Post-clone hook completed"
+        else
+            exit_with_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK not found"
+        fi
     fi
-fi
 
-update_current_release "$DEPLOY_RELEASE_PATH"
+    update_current_release "$DEPLOY_RELEASE_PATH"
 
-cleanup_old_releases
+    cleanup_old_releases
 
-if [ ! -z "$POST_UPDATE_HOOK" ]; then
-    if [ -f "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK" ]; then
-        log_info "Calling $POST_UPDATE_HOOK in release"
+    if [ ! -z "$POST_UPDATE_HOOK" ]; then
+        if [ -f "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK" ]; then
+            log_info "Calling $POST_UPDATE_HOOK in release"
 
-        run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK"
+            run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK"
 
-        log_info "Post-update hook completed"
-    else
-        exit_with_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK not found"
+            log_info "Post-update hook completed"
+        else
+            exit_with_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK not found"
+        fi
     fi
 fi
 
