@@ -6,6 +6,7 @@ REPOSITORY_SSH_KEY_PATH=""
 POST_CLONE_HOOK=""
 POST_UPDATE_HOOK=""
 KEEP_RELEASES_COUNT=10
+FORCE_DEPLOYMENT="0"
 START_TIMESTAMP=$(date +%s)
 START_DATE=`date '+%Y-%m-%d'`
 SCRIPT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -198,6 +199,9 @@ for ARGUMENT in "$@"; do
         KEEP_RELEASES_COUNT)
             KEEP_RELEASES_COUNT=${VALUE}
             ;;
+        FORCE_DEPLOYMENT)
+            FORCE_DEPLOYMENT=${VALUE}
+            ;;
         *)
     esac
 done
@@ -234,11 +238,25 @@ fi
 
 run_command_exit_on_error "git clone --depth 1 $REPOSITORY $DEPLOY_RELEASE_PATH"
 
-CURRENT_COMMIT_ID=`git --git-dir $CURRENT_RELEASE_PATH/.git rev-parse HEAD`
-CLONED_COMMIT_ID=`git --git-dir $DEPLOY_RELEASE_PATH/.git rev-parse HEAD`
+SHOULD_CONTINUE_WITH_DEPLOYMENT="0"
 
-if [ "$CURRENT_COMMIT_ID" == "$CLONED_COMMIT_ID" ]; then
-    log_info "COMMIT IDs are identical, nothing to do. Cleaning up...."
+if [ "$FORCE_DEPLOYMENT" == "1" ]; then
+    SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
+else
+    if [ -d "$CURRENT_RELEASE_PATH" ]; then
+        CURRENT_COMMIT_ID=`git --git-dir $CURRENT_RELEASE_PATH/.git rev-parse HEAD`
+        CLONED_COMMIT_ID=`git --git-dir $DEPLOY_RELEASE_PATH/.git rev-parse HEAD`
+
+        if [ "$CURRENT_COMMIT_ID" != "$CLONED_COMMIT_ID" ]; then
+            SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
+        fi
+    else
+        SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
+    fi
+fi
+
+if [ "$SHOULD_CONTINUE_WITH_DEPLOYMENT" == "0" ]; then
+    exit_with_error "COMMIT IDs are identical, nothing to do. Cleaning up...."
 
     rm -rf "$DEPLOY_RELEASE_PATH"
 else

@@ -7,7 +7,8 @@ POST_CLONE_HOOK=""
 POST_UPDATE_HOOK=""
 SUDO_POST_UPDATE_HOOK=""
 KEEP_RELEASES_COUNT=10
-
+DEPLOYMENT_USER="www-data"
+FORCE_DEPLOYMENT="0"
 START_TIMESTAMP=$(date +%s)
 START_DATE=`date '+%Y-%m-%d'`
 SCRIPT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -198,6 +199,12 @@ for ARGUMENT in "$@"; do
         KEEP_RELEASES_COUNT)
             KEEP_RELEASES_COUNT=${VALUE}
             ;;
+        DEPLOYMENT_USER)
+            DEPLOYMENT_USER=${VALUE}
+            ;;
+        FORCE_DEPLOYMENT)
+            FORCE_DEPLOYMENT=${VALUE}
+            ;;
         *)
     esac
 done
@@ -208,11 +215,13 @@ fi
 
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
+ensure_folder_exists $LOG_PATH
+
 log_info "Deployment started"
 
-run_command_exit_on_error "sudo chown -R www-data: $LOG_PATH"
+run_command_exit_on_error "sudo chown -R $DEPLOYMENT_USER: $LOG_PATH"
 
-run_command_exit_on_error "sudo -u www-data -H ./non-root-deployer.sh DEPLOY_RELEASE_PATH=$DEPLOY_RELEASE_PATH"
+run_command_exit_on_error "sudo -u $DEPLOYMENT_USER -H ./non-root-deployer.sh DEPLOY_RELEASE_PATH=$DEPLOY_RELEASE_PATH FORCE_DEPLOYMENT=$FORCE_DEPLOYMENT"
 
 if [ -f "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK" ]; then
     if [ ! -z "$SUDO_POST_UPDATE_HOOK" ]; then
