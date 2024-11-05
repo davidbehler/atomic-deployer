@@ -184,6 +184,12 @@ for ARGUMENT in "$@"; do
         REPOSITORY)
             REPOSITORY=${VALUE}
             ;;
+        DEPLOYMENT_BRANCH)
+            DEPLOYMENT_BRANCH=${VALUE}
+            ;;
+        GIT_URL)
+            GIT_URL=${VALUE}
+            ;;
         REPOSITORY_SSH_KEY_PATH)
             REPOSITORY_SSH_KEY_PATH=${VALUE}
             ;;
@@ -230,25 +236,23 @@ if [ -z "$REPOSITORY" ]; then
     exit_with_error "No repository set"
 fi
 
-log_info "Cloning repository"
-
 if [ ! -z "$REPOSITORY_SSH_KEY_PATH" ]; then
     export GIT_SSH_COMMAND="ssh -i $REPOSITORY_SSH_KEY_PATH -o IdentitiesOnly=yes"
 fi
 
-run_command_exit_on_error "git clone --depth 1 $REPOSITORY $DEPLOY_RELEASE_PATH"
-
-SHOULD_CONTINUE_WITH_DEPLOYMENT="0"
+log_info "Checking current commit ID"
 
 if [ "$FORCE_DEPLOYMENT" == "1" ]; then
     SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
 else
     if [ -d "$CURRENT_RELEASE_PATH" ]; then
         CURRENT_COMMIT_ID=`git --git-dir $CURRENT_RELEASE_PATH/.git rev-parse HEAD`
-        CLONED_COMMIT_ID=`git --git-dir $DEPLOY_RELEASE_PATH/.git rev-parse HEAD`
+        REMOTE_COMMIT_ID=`git ls-remote $GIT_URL | grep refs/heads/$DEPLOYMENT_BRANCH | cut -f 1`
 
-        if [ "$CURRENT_COMMIT_ID" != "$CLONED_COMMIT_ID" ]; then
+        if [ "$CURRENT_COMMIT_ID" != "$REMOTE_COMMIT_ID" ]; then
             SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
+        else
+            SHOULD_CONTINUE_WITH_DEPLOYMENT="0"
         fi
     else
         SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
@@ -260,31 +264,58 @@ if [ "$SHOULD_CONTINUE_WITH_DEPLOYMENT" == "0" ]; then
 
     rm -rf "$DEPLOY_RELEASE_PATH"
 else
-    if [ ! -z "$POST_CLONE_HOOK" ]; then
-        if [ -f "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK" ]; then
-            log_info "Calling $POST_CLONE_HOOK in release"
+    log_info "Cloning repository"
 
-            run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
+    run_command_exit_on_error "git clone --depth 1 $REPOSITORY $DEPLOY_RELEASE_PATH"
 
-            log_info "Post-clone hook completed"
+    SHOULD_CONTINUE_WITH_DEPLOYMENT="0"
+
+    if [ "$FORCE_DEPLOYMENT" == "1" ]; then
+        SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
+    else
+        if [ -d "$CURRENT_RELEASE_PATH" ]; then
+            CURRENT_COMMIT_ID=`git --git-dir $CURRENT_RELEASE_PATH/.git rev-parse HEAD`
+            CLONED_COMMIT_ID=`git --git-dir $DEPLOY_RELEASE_PATH/.git rev-parse HEAD`
+
+            if [ "$CURRENT_COMMIT_ID" != "$CLONED_COMMIT_ID" ]; then
+                SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
+            fi
         else
-            exit_with_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK not found"
+            SHOULD_CONTINUE_WITH_DEPLOYMENT="1"
         fi
     fi
 
-    update_current_release "$DEPLOY_RELEASE_PATH"
+    if [ "$SHOULD_CONTINUE_WITH_DEPLOYMENT" == "0" ]; then
+        exit_with_error "COMMIT IDs are identical, nothing to do. Cleaning up...."
 
-    cleanup_old_releases
+        rm -rf "$DEPLOY_RELEASE_PATH"
+    else
+        if [ ! -z "$POST_CLONE_HOOK" ]; then
+            if [ -f "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK" ]; then
+                log_info "Calling $POST_CLONE_HOOK in release"
 
-    if [ ! -z "$POST_UPDATE_HOOK" ]; then
-        if [ -f "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK" ]; then
-            log_info "Calling $POST_UPDATE_HOOK in release"
+                # run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
 
-            run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK"
+                log_info "Post-clone hook completed"
+            else
+                exit_with_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK not found"
+            fi
+        fi
 
-            log_info "Post-update hook completed"
-        else
-            exit_with_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK not found"
+        update_current_release "$DEPLOY_RELEASE_PATH"
+
+        cleanup_old_releases
+
+        if [ ! -z "$POST_UPDATE_HOOK" ]; then
+            if [ -f "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK" ]; then
+                log_info "Calling $POST_UPDATE_HOOK in release"
+
+                run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK"
+
+                log_info "Post-update hook completed"
+            else
+                exit_with_error "$DEPLOY_RELEASE_PATH/$POST_UPDATE_HOOK not found"
+            fi
         fi
     fi
 fi
