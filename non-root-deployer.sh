@@ -294,7 +294,7 @@ else
             if [ -f "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK" ]; then
                 log_info "Calling $POST_CLONE_HOOK in release"
 
-                # run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
+                run_command_exit_on_error "$DEPLOY_RELEASE_PATH/$POST_CLONE_HOOK SHARED_PATH=$SHARED_PATH"
 
                 log_info "Post-clone hook completed"
             else
