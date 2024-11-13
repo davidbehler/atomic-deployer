@@ -227,8 +227,6 @@ fi
 
 echo $$ > "${LOCK_FILE}" # Update the lockfile with the current PID
 
-sleep 10
-
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
 ensure_folder_exists $LOG_PATH
