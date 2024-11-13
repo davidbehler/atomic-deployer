@@ -12,6 +12,7 @@ FORCE_DEPLOYMENT="0"
 START_TIMESTAMP=$(date +%s)
 START_DATE=`date '+%Y-%m-%d'`
 SCRIPT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+LOCK_FILE='/tmp/.deployer.lock'
 
 LOG_PATH="$SCRIPT_PATH/logs";
 LOG_FILE="$LOG_PATH/$START_DATE.log"
@@ -118,6 +119,8 @@ function cleanup {
         fi
     fi
 
+    rm -rf $LOCK_FILE
+
     log_info "Cleanup done"
 }
 
@@ -213,6 +216,19 @@ if [ -f "$SCRIPT_PATH/$CONFIG_FILE_NAME" ]; then
     source "$SCRIPT_PATH/$CONFIG_FILE_NAME"
 fi
 
+# The lockfile
+if [[ -s ${LOCK_FILE} ]]; then # File exists and is not empty
+    if ! kill -0 $(cat ${LOCK_FILE}) 2> /dev/null; then  # pid does not exist
+        log_info "The lockfile ${LOCK_FILE} exists but the pid it refers to ($(cat ${LOCK_FILE})) does not exist any more, we can then safely ignore it and continue."
+    else
+        exit_with_error "Concurrent execution detected; cannot continue."
+    fi
+fi
+
+echo $$ > "${LOCK_FILE}" # Update the lockfile with the current PID
+
+sleep 10
+
 DEPLOY_RELEASE_PATH="$RELEASES_PATH/release-$START_DATE-$START_TIMESTAMP"
 
 ensure_folder_exists $LOG_PATH
@@ -232,5 +248,7 @@ if [ -f "$DEPLOY_RELEASE_PATH/$SUDO_POST_UPDATE_HOOK" ]; then
         log_info "sudo post-update hook completed"
     fi
 fi
+
+rm -rf $LOCK_FILE
 
 exit 0
